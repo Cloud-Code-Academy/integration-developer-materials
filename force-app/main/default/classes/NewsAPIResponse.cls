@@ -13,6 +13,21 @@ public with sharing class NewsAPIResponse {
         public String urlToImage;
         public String publishedAt;
         public String content;
+
+        public Article__c toSObject() {
+            Article__c article = new Article__c();
+            article.Author__c = this.author;
+            article.Title__c = this.title;
+            article.Description__c = this.description;
+            article.Url__c = this.url;
+            article.UrlToImage__c = this.urlToImage != null && this.urlToImage.length() > 255 ? this.urlToImage.substring(0, 255) : this.urlToImage;
+            Long lastUpdateLongValue = Long.valueOf(this.publishedAt) * 1000;
+            Datetime lastUpdated = Datetime.newInstance(lastUpdateLongValue);
+            article.Published_At__c = lastUpdated;
+            article.Content__c = this.content;
+    
+            return article;
+        }
     }
 
     public String status;
@@ -45,20 +60,16 @@ public with sharing class NewsAPIResponse {
 
     public static void insertArticleFromResponse(NewsAPIResponse.Article[] articles) {
         List<Article__c> articlesToInsert = new List<Article__c>();
-        for (NewsAPIResponse.Article article : articles) {
-            Article__c a = new Article__c();
-            a.Author__c = article.author;   
-            a.Title__c = article.title;
-            a.Description__c = article.description;
-            a.Url__c = article.url;
-            a.UrlToImage__c = article.urlToImage != null && article.urlToImage.length() > 255 ? article.urlToImage.substring(0,255) : article.urlToImage;
-            // Long lastUpdateLongValue = Long.valueOf(article.publishedAt) * 1000;
-            // Datetime lastUpdated = Datetime.newInstance(lastUpdateLongValue);
-            // a.Published_At__c = lastUpdated;
-            a.Content__c = article.content;
+        for (NewsAPIResponse.Article articleWrap : articles) {
+            Article__c a = articleWrap.toSObject();
             articlesToInsert.add(a);
         }
         insert articlesToInsert;
+    }
+
+    private static Article__c generateArticleFromWrapper(NewsAPIResponse.Article articleWrap) {
+        Article__c a = articleWrap.toSObject();
+        return a;
     }
 
 }

@@ -1,7 +1,13 @@
 public with sharing class NewsCategoryTriggerHandler {
-    public static void onAfterInsert(List<News_Category__c> newCategories) {
+    // public static void onAfterInsertFuture(List<News_Category__c> newCategories) {
+    //     for (News_Category__c newsCategory : newCategories) {
+    //         NewsAPIService.getTopHeadlinesFuture(newsCategory.Name);
+    //     }
+    // }
+
+    public static void onAfterInsertQueueable(List<News_Category__c> newCategories) {
         for (News_Category__c newsCategory : newCategories) {
-            NewsAPIService.getTopHeadlines(newsCategory.Name);
+            System.enqueueJob(new NewsAPIQueueable(1));
         }
     }
 }

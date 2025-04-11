@@ -11,7 +11,7 @@ public with sharing class NewsAPIResponse {
         public String description;
         public String url;
         public String urlToImage;
-        public String publishedAt;
+        public DateTime publishedAt;
         public String content;
 
         public Article__c toSObject() {
@@ -21,9 +21,9 @@ public with sharing class NewsAPIResponse {
             article.Description__c = this.description;
             article.Url__c = this.url;
             article.UrlToImage__c = this.urlToImage != null && this.urlToImage.length() > 255 ? this.urlToImage.substring(0, 255) : this.urlToImage;
-            Long lastUpdateLongValue = Long.valueOf(this.publishedAt) * 1000;
-            Datetime lastUpdated = Datetime.newInstance(lastUpdateLongValue);
-            article.Published_At__c = lastUpdated;
+            // Long lastUpdateLongValue = Long.valueOf(this.publishedAt) * 1000;
+            // Datetime lastUpdated = Datetime.newInstance(lastUpdateLongValue);
+            article.Published_At__c = this.publishedAt;
             article.Content__c = this.content;
     
             return article;
@@ -67,8 +67,23 @@ public with sharing class NewsAPIResponse {
         insert articlesToInsert;
     }
 
+    // private static Article__c generateArticleFromWrapper(NewsAPIResponse.Article articleWrap) {
+    //     Article__c a = articleWrap.toSObject();
+    //     return a;
+    // }
+
     private static Article__c generateArticleFromWrapper(NewsAPIResponse.Article articleWrap) {
-        Article__c a = articleWrap.toSObject();
+        Article__c a = new Article__c();
+        a.Author__c = articleWrap.author;
+        a.Title__c = articleWrap.title;
+        a.Description__c = articleWrap.description;
+        a.Url__c = articleWrap.url;
+        a.UrlToImage__c = articleWrap.urlToImage != null && articleWrap.urlToImage.length() > 255 ? articleWrap.urlToImage.substring(0, 255) : articleWrap.urlToImage;
+        // Long lastUpdateLongValue = Long.valueOf(articleWrap.publishedAt) * 1000;
+        // Datetime lastUpdated = Datetime.newInstance(lastUpdateLongValue);
+        // a.Published_At__c = lastUpdated;
+        a.Content__c = articleWrap.content;
+        // a.Category__c = category;
         return a;
     }
 

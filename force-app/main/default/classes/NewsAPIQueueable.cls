@@ -1,32 +1,37 @@
 public with sharing class NewsAPIQueueable implements Queueable, Database.AllowsCallouts {
 
-    private Integer page;
+    private News_Category__c category;
+    private Integer currentPage;
 
-    public NewsAPIQueueable() {
-        this.page = 1;
+    private static final Integer MAX_PAGES = 2; // Maximum number of pages to process
+    
+    public NewsAPIQueueable(News_Category__c category, Integer currentPage) {
+        this.category = category;
+        this.currentPage = currentPage;
     }
 
-    public NewsAPIQueueable(Integer page) {
-        this.page = page;
-    }
 
     public void execute(QueueableContext context) {
-        System.debug('Executing NewsAPIQueueable...');
-        // NewsAPIService.getTopHeadlines(page);
-        System.debug('Page: ' + page);
+        System.debug('Executing NewsAPIQueueable...' + category.Name + ' page: ' + currentPage);
+        String responseBody = NewsAPIService.getTopHeadlines(category.Name, currentPage);
 
-        //what page am I on
-        //how many pages do I have
-        //Run a calculation to get the last page
-        //Am I on the last page
+       
+        NewsAPIResponse newsResponse = NewsAPIResponse.parse(responseBody);
+        NewsAPIResponse.insertArticleFromResponse(newsResponse.articles);
 
-        //if I am not on the last page, enqueue the next job
-        if (page < 5) {
-            NewsAPIQueueable nextJob = new NewsAPIQueueable(page + 1);
-            System.debug('Enqueuing next job with page: ' + nextJob.page);
-            System.enqueueJob(nextJob);
+        if (currentPage < MAX_PAGES) {
+            if (!Test.isRunningTest()) {
+                NewsAPIQueueable job = new NewsAPIQueueable(category, currentPage + 1);
+                System.enqueueJob(job);
+            }
         } else {
-            System.debug('Reached maximum page limit. No more jobs will be enqueued.');
+            // Update the category to set Sync__c to false and set Last_Synced__c to now
+            News_Category__c tempCategory = new News_Category__c(Id = category.Id);
+            tempCategory.Sync__c = false;
+            tempCategory.Last_Synced__c = System.now();
+            update tempCategory;
+            // category.Sync__c = false;
+            // update category;
         }
     }
 }
